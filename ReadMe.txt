@@ -2,6 +2,7 @@ World
 
 Meerdimensionele Map? x co -> Map met y co -> bool alive
 	-> maakt zoeken makkelijker?
+of: extra klasse Punt toevoegen?
 
 
 .nextGeneration //gebruikt toggleCell, isAlive om nieuwe staat te bepalen.
