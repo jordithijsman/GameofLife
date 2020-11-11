@@ -14,8 +14,24 @@ public class Vakje {
         this.alive = bool;
     }
 
-    public Boolean getAlive(){
+    public void setBuren(int buren){
+        this.buren = buren;
+    }
+
+    public void wijzigAantaBuren(char teken){
+        if(teken == '+'){
+            buren+=1;
+        }if(teken == '-' && buren !=0){
+            buren-=1;
+        }
+    }
+
+    public Boolean getAlive() {
         return this.alive;
+    }
+
+    public int getBuren(){
+        return this.buren;
     }
 
 }
