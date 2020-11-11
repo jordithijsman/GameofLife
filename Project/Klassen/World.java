@@ -93,7 +93,7 @@ public class World {
         }
     }
 
-    public void randomCells() { // vult hele lijn??
+    public void randomCells() {
         Random rd = new Random();
         for(Map<Integer, Vakje> yCo : puntenMap.values()){
             for(Vakje vak: yCo.values()){
