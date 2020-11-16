@@ -184,7 +184,8 @@ public class Main extends Application {
     private void handleSaveFile(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
-        File file = fileChooser.showOpenDialog(stage);
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+        File file = fileChooser.showSaveDialog(stage);
         if (file != null) {
             try {
                 this.world.saveToFile(file);
