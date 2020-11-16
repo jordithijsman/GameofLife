@@ -2,11 +2,7 @@ package sample.model;
 
 import com.sun.prism.paint.RadialGradient;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -20,6 +16,34 @@ public class World {
     private Map<Integer, Map<Integer, Vakje>> puntenMap = new HashMap<>();
 
     public World(File file) throws FileNotFoundException {
+        Scanner sc = new Scanner(file);
+        if (sc.hasNextLine()) {
+
+            this.hoogte = sc.nextInt();
+            this.breedte = sc.nextInt();
+        }
+        sc.nextLine();
+        for (int x = 0; x < this.breedte; x++) {
+            puntenMap.put(x, new HashMap<>());
+            if (sc.hasNextLine()) {
+                String lijn = sc.nextLine();
+                if (lijn.length() == this.hoogte) {
+                    for (int y = 0; y < lijn.length(); y++) {
+                        char cell = lijn.charAt(y);
+                        puntenMap.get(x).put(y, new Vakje());
+                        Vakje test = puntenMap.get(x).get(y);
+                        if (lijn.charAt(y) == '.') {
+                            puntenMap.get(x).get(y).setAlive(false);
+                        } else if (lijn.charAt(y) == 'O') {
+                            puntenMap.get(x).get(y).setAlive(true);
+                        }
+                    }
+                }
+            }
+        }
+        sc.close();
+        alleBuren();
+
     }
 
     public World(int width, int height) {
@@ -27,27 +51,60 @@ public class World {
         this.hoogte = height;
         for (int i = 0; i < breedte; i++) {
             puntenMap.put(i, new HashMap<>());
-            for(int k = 0; k < hoogte; k++){
+            for (int k = 0; k < hoogte; k++) {
                 puntenMap.get(i).put(k, new Vakje());
             }
         }
     }
 
     public void toggleCell(int x, int y) {
-        if(puntenMap.get(x).get(y).getAlive()){
+        if (puntenMap.get(x).get(y).getAlive()) {
             puntenMap.get(x).get(y).setAlive(false);
-        }else{
+        } else {
             puntenMap.get(x).get(y).setAlive(true);
         }
-        Buren(x,y);
-        System.out.println(puntenMap.get(1).get(1).getBuren());
+        telBuren(x, y);
     }
 
-    public void saveToFile(final File file) throws IOException {
+    public void saveToFile(File file) throws IOException {
+        FileWriter out = new FileWriter(file);
+        StringBuilder output = new StringBuilder(this.hoogte + " " + this.breedte + "\n");
+        for (int x = 0; x < this.breedte; x++) {
+            for (int y = 0; y < this.hoogte; y++) {
+                if (puntenMap.get(x).get(y).getAlive()) {
+                    output.append("O");
+                } else {
+                    output.append(".");
+                }
+            }
+            output.append("\n");
+        }
+        out.write(output.toString());
+        out.close();
     }
 
     public void nextGeneration() {
+        alleBuren();
+        World hulpWereld = new World(this.breedte, this.hoogte);
+        hulpWereld.puntenMap.putAll(puntenMap);
+
+        for (int x = 0; x < this.breedte; x++) {
+            for (int y = 0; y < this.hoogte; y++) {
+                Vakje teBekijken = this.puntenMap.get(x).get(y);
+                Vakje aanTePassen = hulpWereld.puntenMap.get(x).get(y);
+                if (teBekijken.getAlive() && teBekijken.getBuren() <= 1) {
+                    aanTePassen.setAlive(false);
+                } else if (teBekijken.getAlive() && teBekijken.getBuren() >= 4) {
+                    aanTePassen.setAlive(false);
+                } else if ((!teBekijken.getAlive()) && teBekijken.getBuren() == 3) {
+                    aanTePassen.setAlive(true);
+                }
+            }
+        }
+        this.puntenMap.putAll(hulpWereld.puntenMap);
+        alleBuren();
     }
+
 
     public int getWidth() {
         return this.breedte;
@@ -61,45 +118,61 @@ public class World {
         return puntenMap.get(x).get(y).getAlive();
     }
 
-    private void Buren(int x, int y){
-        char teken;
-        if(puntenMap.get(x).get(y).getAlive()){
-            teken = '+';
-        }else teken = '-';
-
-        if(x!=0){
-            puntenMap.get(x-1).get(y).wijzigAantaBuren(teken);
-            if(y!= hoogte-1){
-                puntenMap.get(x-1).get(y+1).wijzigAantaBuren(teken);
+    private void alleBuren() {
+        for (int x = 0; x < this.breedte; x++) {
+            for (int y = 0; y < this.hoogte; y++) {
+                telBuren(x, y);
             }
-            if(y!=0){
-                puntenMap.get(x-1).get(y-1).wijzigAantaBuren(teken);
-            }
-        }
-        if(x!= breedte-1){
-            puntenMap.get(x+1).get(y).wijzigAantaBuren(teken);
-            if(y!=hoogte-1){
-                puntenMap.get(x+1).get(y+1).wijzigAantaBuren(teken);
-            }
-            if(y!=0){
-                puntenMap.get(x+1).get(y-1).wijzigAantaBuren(teken);
-            }
-        }
-        if(y!=0){
-            puntenMap.get(x).get(y-1).wijzigAantaBuren(teken);
-        }
-        if(y!=hoogte-1){
-            puntenMap.get(x).get(y+1).wijzigAantaBuren(teken);
         }
     }
 
-    public void randomCells() {
-        Random rd = new Random();
-        for(Map<Integer, Vakje> yCo : puntenMap.values()){
-            for(Vakje vak: yCo.values()){
-                vak.setAlive(rd.nextBoolean());
+    private void telBuren(int x, int y) {
+        int aantalBuren = 0;
+
+        // x-1
+        if (x != 0) {
+            if (puntenMap.get(x - 1).get(y).getAlive()) {
+                aantalBuren++;
+            }
+
+            if (y != this.hoogte - 1 && puntenMap.get(x - 1).get(y + 1).getAlive()) {
+                aantalBuren++;
+            }
+            if (y != 0 && puntenMap.get(x - 1).get(y - 1).getAlive()) {
+                aantalBuren++;
             }
         }
+        //x+1
+        if (x != this.breedte - 1) {
+            if (puntenMap.get(x + 1).get(y).getAlive()) {
+                aantalBuren++;
+            }
+            if (y != this.hoogte - 1 && puntenMap.get(x + 1).get(y + 1).getAlive()) {
+                aantalBuren++;
+            }
+            if (y != 0 && puntenMap.get(x + 1).get(y - 1).getAlive()) {
+                aantalBuren++;
+            }
+        }
+        if (y != 0 && puntenMap.get(x).get(y - 1).getAlive()) {
+            aantalBuren++;
+        }
+        if (y != this.hoogte - 1 && puntenMap.get(x).get(y + 1).getAlive()) {
+            aantalBuren++;
+        }
+        puntenMap.get(x).get(y).setBuren(aantalBuren);
+    }
+
+
+    public void randomCells() {
+        Random rd = new Random();
+        for (int x = 0; x < this.breedte; x++) {
+            for (int y = 0; y < this.hoogte; y++) {
+                puntenMap.get(x).get(y).setAlive(rd.nextBoolean());
+
+            }
+        }
+        alleBuren();
     }
 
 }
