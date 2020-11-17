@@ -24,6 +24,7 @@ import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import sample.model.BestandOngeldigException;
 import sample.model.World;
 
 import java.io.File;
@@ -171,7 +172,13 @@ public class Main extends Application {
         File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
             try {
-                this.world = new World(file);
+                    try{
+                        this.world = new World(file); //exception
+                    } catch(BestandOngeldigException e){
+                        System.err.println(e.getMessage());
+                        return;
+                    }
+
                 spinnerWidth.getValueFactory().setValue(world.getWidth());
                 spinnerHeight.getValueFactory().setValue(world.getHeight());
                 initGrid(world.getWidth(), world.getHeight());
